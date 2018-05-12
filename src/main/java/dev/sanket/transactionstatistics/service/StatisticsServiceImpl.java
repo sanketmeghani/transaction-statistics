@@ -1,6 +1,7 @@
 package dev.sanket.transactionstatistics.service;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import org.slf4j.Logger;
@@ -49,5 +50,18 @@ public class StatisticsServiceImpl implements StatisticsService {
             writeStatisticsLock.unlock();
         }
 
+    }
+
+    @Override
+    public Statistics getStatistics() {
+
+        ReadLock readStatisticsLock = statisticsLock.readLock();
+
+        try {
+            readStatisticsLock.lock();
+            return statistics;
+        } finally {
+            readStatisticsLock.unlock();
+        }
     }
 }
