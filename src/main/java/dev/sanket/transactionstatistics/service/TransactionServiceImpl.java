@@ -20,8 +20,8 @@ public class TransactionServiceImpl implements TransactionService {
             throw new TransactionServiceException("Transaction is older than 60 seconds - " + transaction);
         }
 
-        //key should be absolute second and not transactionAge
-        transactionRepository.put((int) transactionAge, transaction);
+        int absoluteSeconds = (int) ((transaction.getTimestamp() / 1000) % 60);
+        transactionRepository.put(absoluteSeconds, transaction);
     }
 
     public void setTransactionRepository(TransactionRepository transactionRepository) {
