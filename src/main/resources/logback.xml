@@ -15,6 +15,11 @@
             </Pattern>
         </encoder>
     </appender>
+
+    <logger name="dev.sanket.transactionstatistics" additivity="false" level="debug">
+        <appender-ref ref="STDOUT" />
+    </logger>
+    
     <root level="info">
         <appender-ref ref="STDOUT" />
         <!-- <appender-ref ref="FILE" /> -->
