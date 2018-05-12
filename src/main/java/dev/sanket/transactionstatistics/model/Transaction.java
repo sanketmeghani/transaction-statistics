@@ -2,6 +2,8 @@ package dev.sanket.transactionstatistics.model;
 
 import java.util.UUID;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 public class Transaction {
 
     private final String id = UUID.randomUUID().toString();
@@ -33,10 +35,11 @@ public class Transaction {
     @Override
     public String toString() {
 
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("{").append(id).append(", ").append(amount).append(",").append(timestamp).append("}");
-
-        return sb.toString();
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.writeValueAsString(this);
+        } catch (Exception e) {
+            return "{}";
+        }
     }
 }

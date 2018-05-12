@@ -5,9 +5,15 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.IntStream;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 import dev.sanket.transactionstatistics.model.Transaction;
+import dev.sanket.transactionstatistics.service.StatisticsService;
 
 public class TransactionRepository {
+
+    @Autowired
+    private StatisticsService statisticsService;
 
     private ConcurrentHashMap<Integer, List<Transaction>> transactions = new ConcurrentHashMap<Integer, List<Transaction>>();
 
@@ -21,6 +27,7 @@ public class TransactionRepository {
 
         synchronized (transactionList) {
             transactionList.add(transaction);
+            statisticsService.trackTransaction(transaction);
         }
     }
 }
