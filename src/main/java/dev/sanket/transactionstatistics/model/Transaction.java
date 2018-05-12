@@ -29,4 +29,14 @@ public class Transaction {
     public String getId() {
         return id;
     }
+
+    @Override
+    public String toString() {
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("{").append(id).append(", ").append(amount).append(",").append(timestamp).append("}");
+
+        return sb.toString();
+    }
 }
