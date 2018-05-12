@@ -1,5 +1,7 @@
 package dev.sanket.transactionstatistics.controller;
 
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import dev.sanket.transactionstatistics.model.Statistics;
 import dev.sanket.transactionstatistics.service.StatisticsService;
 
 @RestController("/statistics")
@@ -21,9 +22,10 @@ public class StatisticsController {
     private StatisticsService statisticsService;
     
     @RequestMapping(method = RequestMethod.GET, produces = { MediaType.APPLICATION_JSON_VALUE })
-    public ResponseEntity<Statistics> getStatistics() {
+    public ResponseEntity<Map<String, Object>> getStatistics() {
 
-        Statistics statistics = statisticsService.getStatistics();
+        Map<String, Object> statistics = statisticsService.getStatistics();
+        
         logger.info("Returning statistics - {}", statistics);
         return ResponseEntity.ok(statistics);
     }

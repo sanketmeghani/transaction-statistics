@@ -1,15 +1,14 @@
 package dev.sanket.transactionstatistics.service;
 
-import java.util.List;
+import java.util.Map;
 
-import dev.sanket.transactionstatistics.model.Statistics;
 import dev.sanket.transactionstatistics.model.Transaction;
 
 public interface StatisticsService {
 
     public void trackTransaction(Transaction transaction);
 
-    public Statistics getStatistics();
+    public Map<String, Object> getStatistics();
 
-    public void removeTransactions(List<Transaction> transactionList);
+    public void purgeStatisticsFor(int second);
 }

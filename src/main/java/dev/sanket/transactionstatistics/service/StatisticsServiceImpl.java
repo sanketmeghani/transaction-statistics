@@ -1,12 +1,11 @@
 package dev.sanket.transactionstatistics.service;
 
-import java.util.List;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
-import java.util.function.ToDoubleFunction;
+import java.util.stream.IntStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,103 +17,95 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     private static final Logger logger = LoggerFactory.getLogger(StatisticsServiceImpl.class);
 
-    private Statistics statistics = new Statistics();
+    private Statistics globalStats = new Statistics();
 
-    private ConcurrentHashMap<Double, AtomicInteger> amountCounts = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<Integer, Statistics> secondWiseStats = new ConcurrentHashMap<>();
 
-    private ReentrantReadWriteLock statisticsLock = new ReentrantReadWriteLock();
+    public StatisticsServiceImpl() {
+        IntStream.range(0, 60).forEach((second) -> secondWiseStats.put(Integer.valueOf(second), new Statistics()));
+    }
 
     @Override
     public void trackTransaction(Transaction transaction) {
 
-        logger.debug("Updating statistics for transaction - {}", transaction);
-        updateStatistics(transaction.getAmount());
-        logger.debug("Updated statistics - {}", statistics);
-    }
+        ZonedDateTime transactionTime = Instant.ofEpochMilli(transaction.getTimestamp()).atZone(ZoneId.systemDefault());
+        int absoluteSecond = transactionTime.getSecond();
+        double transactionAmount = transaction.getAmount();
 
-    private void updateStatistics(double transactionAmount) {
+        logger.debug("Transaction statistics bucket - {}", absoluteSecond);
+        logger.debug("Current statistics - {}", globalStats);
 
-        WriteLock writeStatisticsLock = statisticsLock.writeLock();
+        Statistics statistics = secondWiseStats.get(Integer.valueOf(absoluteSecond));
 
-        try {
-            writeStatisticsLock.lock();
+        globalStats.lockForWrite();
 
-            if (transactionAmount > statistics.getMax() || statistics.getCount() == 0) {
-                statistics.setMax(transactionAmount);
-            } else if (transactionAmount < statistics.getMin() || statistics.getCount() == 0) {
-                statistics.setMin(transactionAmount);
-            }
+        statistics.addNewTransaction(transactionAmount);
+        globalStats.addNewTransaction(transactionAmount);
 
-            double sum = statistics.getSum() + transactionAmount;
-            long count = statistics.getCount() + 1;
-            double avg = sum / count;
+        globalStats.releaseWriteLock();
 
-            statistics.setSum(sum);
-            statistics.setAvg(avg);
-            statistics.setCount(count);
-
-            Double doubleAmount = Double.valueOf(transactionAmount);
-
-            if (!amountCounts.containsKey(doubleAmount)) {
-                amountCounts.put(doubleAmount, new AtomicInteger());
-            }
-
-            amountCounts.get(doubleAmount).incrementAndGet();
-
-        } finally {
-            writeStatisticsLock.unlock();
-        }
-
+        logger.debug("Updated statistics - {}", globalStats);
     }
 
     @Override
-    public Statistics getStatistics() {
-
-        ReadLock readStatisticsLock = statisticsLock.readLock();
-
-        try {
-            readStatisticsLock.lock();
-            return statistics;
-        } finally {
-            readStatisticsLock.unlock();
-        }
+    public Map<String, Object> getStatistics() {
+        return globalStats.snapshot();
     }
 
     @Override
-    public void removeTransactions(List<Transaction> transactionList) {
+    public void purgeStatisticsFor(int second) {
 
-        WriteLock writeStatisticsLock = statisticsLock.writeLock();
+        Statistics statisticsToBePurged = this.secondWiseStats.get(Integer.valueOf(second));
 
-        try {
-            writeStatisticsLock.lock();
+        globalStats.lockForWrite();
+        statisticsToBePurged.lockForWrite();
 
-            double amountToReduce = transactionList.parallelStream().mapToDouble(processAndGetAmount).sum();
+        logger.debug("Purging statistics for second - {}", second);
+        logger.debug("Current statistics - {}", globalStats);
+        logger.debug("Purging statistics - {}", statisticsToBePurged);
 
-            double max = amountCounts.keySet().parallelStream().mapToDouble(d -> d).max().getAsDouble();
-            double min = amountCounts.keySet().parallelStream().mapToDouble(d -> d).min().getAsDouble();
-            double sum = statistics.getSum() - amountToReduce;
-            long count = statistics.getCount() - transactionList.size();
-            double avg = sum / count;
+        statisticsToBePurged.reset();
+        statisticsToBePurged.releaseWriteLock();
 
-            statistics.setMax(max);
-            statistics.setMin(min);
-            statistics.setSum(sum);
-            statistics.setAvg(avg);
-            statistics.setCount(count);
+        updateGlobalStats();
 
-        } finally {
-            writeStatisticsLock.unlock();
-        }
+        globalStats.releaseWriteLock();
+        logger.debug("Updated statistics - {}", globalStats);
     }
 
-    private ToDoubleFunction<? super Transaction> processAndGetAmount = (transaction) -> {
+    private void updateGlobalStats() {
 
-        Double transactionAmount = Double.valueOf(transaction.getAmount());
+        globalStats.reset();
 
-        if (amountCounts.get(transactionAmount).decrementAndGet() == 0) {
-            amountCounts.remove(transactionAmount);
+        double max = globalStats.getMax();
+        double min = globalStats.getMin();
+        double sum = globalStats.getSum();
+        double avg = globalStats.getAvg();
+        long count = globalStats.getCount();
+
+        for (Statistics statistics : this.secondWiseStats.values()) {
+
+            if (count == 0) {
+                max = statistics.getMax();
+                min = statistics.getMin();
+            } else if (statistics.getMax() > max) {
+                max = statistics.getMax();
+            } else if (statistics.getMin() < min) {
+                min = statistics.getMin();
+            }
+
+            count = count + statistics.getCount();
+            sum = sum + statistics.getSum();
         }
 
-        return transactionAmount;
-    };
+        if (count > 0) {
+            avg = sum / count;
+        }
+
+        globalStats.setMax(max);
+        globalStats.setMin(min);
+        globalStats.setCount(count);
+        globalStats.setSum(sum);
+        globalStats.setAvg(avg);
+    }
 }

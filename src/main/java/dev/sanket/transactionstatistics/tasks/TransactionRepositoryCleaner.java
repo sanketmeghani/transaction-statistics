@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import dev.sanket.transactionstatistics.util.TransactionRepository;
+import dev.sanket.transactionstatistics.service.StatisticsService;
 
 @Component
 public class TransactionRepositoryCleaner {
@@ -16,7 +16,7 @@ public class TransactionRepositoryCleaner {
     private static final Logger logger = LoggerFactory.getLogger(TransactionRepositoryCleaner.class);
 
     @Autowired
-    private TransactionRepository transactionRepository;
+    private StatisticsService statisticsService;
 
     @Scheduled(initialDelay = 60000, fixedRate = 1000)
     public void purgeTransactions() {
@@ -24,7 +24,7 @@ public class TransactionRepositoryCleaner {
         logger.debug("Purging transactions older than 60 seconds");
 
         int expiredSecond = LocalTime.now().getSecond();
-        transactionRepository.cleanUpTransactionsForSecond(expiredSecond);
+        this.statisticsService.purgeStatisticsFor(expiredSecond);
     }
 
 }

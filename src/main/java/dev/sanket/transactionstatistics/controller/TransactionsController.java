@@ -32,7 +32,7 @@ public class TransactionsController {
 
         } catch (Exception e) {
 
-            logger.error("Exception processing transaction", e);
+            logger.error("Exception processing transaction - {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         }
 

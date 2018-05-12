@@ -1,12 +1,8 @@
 package dev.sanket.transactionstatistics.model;
 
-import java.util.UUID;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Transaction {
-
-    private final String id = UUID.randomUUID().toString();
 
     private double amount;
 
@@ -26,10 +22,6 @@ public class Transaction {
 
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
-    }
-
-    public String getId() {
-        return id;
     }
 
     @Override
