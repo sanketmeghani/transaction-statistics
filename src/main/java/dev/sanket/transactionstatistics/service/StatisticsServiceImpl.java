@@ -23,7 +23,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
         logger.debug("Updating statistics for transaction - {}", transaction);
         updateStatistics(transaction.getAmount());
-        logger.debug("Statistics after update - {}", statistics);
+        logger.debug("Updated statistics - {}", statistics);
     }
 
     private void updateStatistics(double transactionAmount) {
@@ -33,9 +33,9 @@ public class StatisticsServiceImpl implements StatisticsService {
         try {
             writeStatisticsLock.lock();
 
-            if (transactionAmount > statistics.getMax()) {
+            if (transactionAmount > statistics.getMax() || statistics.getCount() == 0) {
                 statistics.setMax(transactionAmount);
-            } else if (transactionAmount < statistics.getMin()) {
+            } else if (transactionAmount < statistics.getMin() || statistics.getCount() == 0) {
                 statistics.setMin(transactionAmount);
             }
 
