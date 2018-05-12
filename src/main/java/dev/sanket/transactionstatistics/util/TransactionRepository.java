@@ -30,4 +30,14 @@ public class TransactionRepository {
             statisticsService.trackTransaction(transaction);
         }
     }
+
+    public void cleanUpTransactionsForSecond(int expiredSecond) {
+
+        List<Transaction> transactionList = transactions.get(Integer.valueOf(expiredSecond));
+        
+        synchronized (transactionList) {
+            statisticsService.removeTransactions(transactionList);
+            transactionList.clear();
+        }
+    }
 }
