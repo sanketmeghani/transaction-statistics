@@ -1,4 +1,4 @@
-package dev.sanket.transactionstatistics.util;
+package dev.sanket.transactionstatistics.tasks;
 
 import java.time.LocalTime;
 
@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
+import dev.sanket.transactionstatistics.util.TransactionRepository;
 
 @Component
 public class TransactionRepositoryCleaner {
