@@ -11,14 +11,14 @@ import org.springframework.stereotype.Component;
 import dev.sanket.transactionstatistics.service.StatisticsService;
 
 @Component
-public class TransactionRepositoryCleaner {
+public class TransactionPurger {
 
-    private static final Logger logger = LoggerFactory.getLogger(TransactionRepositoryCleaner.class);
+    private static final Logger logger = LoggerFactory.getLogger(TransactionPurger.class);
 
     @Autowired
     private StatisticsService statisticsService;
 
-    @Scheduled(initialDelay = 60000, fixedRate = 1000)
+    @Scheduled(initialDelay = 1000, fixedRate = 1000)
     public void purgeTransactions() {
 
         logger.debug("Purging transactions older than 60 seconds");
