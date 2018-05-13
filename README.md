@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/sanketmeghani/transaction-statistics.svg?branch=master)](https://travis-ci.org/sanketmeghani/transaction-statistics)
+
 # Transaction Statistics Service
 
 REST API to track and get statistics of transactions
