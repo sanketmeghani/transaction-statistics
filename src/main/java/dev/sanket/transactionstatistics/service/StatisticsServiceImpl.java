@@ -33,18 +33,18 @@ public class StatisticsServiceImpl implements StatisticsService {
         double transactionAmount = transaction.getAmount();
 
         logger.debug("Transaction statistics bucket - {}", absoluteSecond);
-        logger.debug("Current statistics - {}", globalStats);
+        logger.debug("Current statistics - {}", this.globalStats);
 
         Statistics statistics = secondWiseStats.get(Integer.valueOf(absoluteSecond));
 
-        globalStats.lockForWrite();
+        this.globalStats.lockForWrite();
 
         statistics.addNewTransaction(transactionAmount);
-        globalStats.addNewTransaction(transactionAmount);
+        this.globalStats.addNewTransaction(transactionAmount);
 
-        globalStats.releaseWriteLock();
+        this.globalStats.releaseWriteLock();
 
-        logger.debug("Updated statistics - {}", globalStats);
+        logger.debug("Updated statistics - {}", this.globalStats);
     }
 
     @Override
@@ -57,40 +57,46 @@ public class StatisticsServiceImpl implements StatisticsService {
 
         Statistics statisticsToBePurged = this.secondWiseStats.get(Integer.valueOf(second));
 
-        globalStats.lockForWrite();
+        this.globalStats.lockForWrite();
         statisticsToBePurged.lockForWrite();
 
         logger.debug("Purging statistics for second - {}", second);
-        logger.debug("Current statistics - {}", globalStats);
+        logger.debug("Current statistics - {}", this.globalStats);
         logger.debug("Purging statistics - {}", statisticsToBePurged);
 
         statisticsToBePurged.reset();
         statisticsToBePurged.releaseWriteLock();
 
-        updateGlobalStats();
+        updateGlobalStats(second);
 
-        globalStats.releaseWriteLock();
-        logger.debug("Updated statistics - {}", globalStats);
+        this.globalStats.releaseWriteLock();
+        logger.debug("Updated statistics - {}", this.globalStats);
     }
 
-    private void updateGlobalStats() {
+    private void updateGlobalStats(int purgedBucket) {
 
-        globalStats.reset();
+        this.globalStats.reset();
 
-        double max = globalStats.getMax();
-        double min = globalStats.getMin();
-        double sum = globalStats.getSum();
-        double avg = globalStats.getAvg();
-        long count = globalStats.getCount();
+        double max = this.globalStats.getMax();
+        double min = this.globalStats.getMin();
+        double sum = this.globalStats.getSum();
+        double avg = this.globalStats.getAvg();
+        long count = this.globalStats.getCount();
 
-        for (Statistics statistics : this.secondWiseStats.values()) {
+        for (int second = 0; second < 60; second++) {
+
+            if (second == purgedBucket) {
+                continue;
+            }
+
+            Statistics statistics = this.secondWiseStats.get(Integer.valueOf(second));
 
             if (count == 0) {
                 max = statistics.getMax();
                 min = statistics.getMin();
-            } else if (statistics.getMax() > max) {
+            } else if (statistics.getMax() > max && statistics.getMax() != 0) {
                 max = statistics.getMax();
-            } else if (statistics.getMin() < min) {
+            } else if (statistics.getMin() < min && statistics.getMin() != 0) {
                 min = statistics.getMin();
             }
 
@@ -102,10 +108,10 @@ public class StatisticsServiceImpl implements StatisticsService {
             avg = sum / count;
         }
 
-        globalStats.setMax(max);
-        globalStats.setMin(min);
-        globalStats.setCount(count);
-        globalStats.setSum(sum);
-        globalStats.setAvg(avg);
+        this.globalStats.setMax(max);
+        this.globalStats.setMin(min);
+        this.globalStats.setCount(count);
+        this.globalStats.setSum(sum);
+        this.globalStats.setAvg(avg);
     }
 }
