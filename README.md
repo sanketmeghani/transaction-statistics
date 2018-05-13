@@ -30,7 +30,7 @@ The apis are available on `http://<server-name/ip>:8080`
 
 ## REST APIs
 
-`POST /transactions`
+### POST /transactions
 
 Payload: 
 ```
@@ -55,7 +55,7 @@ Sample API call using `curl`
 curl -i -X POST -H "Content-Type: application/json" -d '{ "amount": 11.78, "timestamp": 1526147824985 }' http://localhost:8080/transactions
 ```
 
-`GET /statistics`
+### GET /statistics
 
 It​ ​returns​ ​the​ ​statistic​ ​based​ ​on​ ​the​ ​transactions​ ​which​ ​happened​ ​in​ ​the​ ​last​ ​60 seconds.
 
